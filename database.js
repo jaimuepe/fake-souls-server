@@ -78,6 +78,7 @@ async function get_message_data(message_id) {
     SELECT
       m.id as message_id,
       m.content as message_content,
+      m.created_on as message_created_on,
       u.id as user_id,
       u.display_name as user_display_name
     FROM messages m 

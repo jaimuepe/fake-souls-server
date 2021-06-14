@@ -47,6 +47,8 @@ app.post("/nearby_messages/:user_id", async (req, res) => {
   res.json(data);
 });
 
-app.listen(3000, () => {
+var port = process.env.PORT || serverPort;
+
+app.listen(port, () => {
   console.log("El servidor está inicializado en el puerto 3000");
 });

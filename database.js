@@ -18,7 +18,7 @@ const pool = createPool({
 });
 
 const max_messages = 10;
-const max_message_distance = 10.0;
+const max_message_distance = 50.0;
 const max_sqr_message_distance = max_message_distance * max_message_distance;
 
 async function create_message(data) {

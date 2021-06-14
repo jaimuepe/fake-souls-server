@@ -1,8 +1,11 @@
 import express, { json } from "express";
 import db from "./database.js";
 
+import cors from "cors";
+
 const app = express();
 app.use(json());
+app.use(cors());
 
 app.get("/message/:message_id", async (req, res) => {
   var message_id = +req.params.message_id;

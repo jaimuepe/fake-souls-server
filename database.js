@@ -1,9 +1,17 @@
 import { createPool } from "mysql2/promise";
 
+const database_server = process.env.database_server || 'localhost';
+const database_name = process.env.database_name || 'game';
+const database_username = process.env.database_username || 'root';
+const database_password = process.env.database_password || '';
+const database_port = process.env.database_server || 3306;
+
 const pool = createPool({
-  host: "localhost",
-  user: "root",
-  database: "game",
+  host: database_server,
+  database: database_name,
+  user: database_username,
+  password: database_password,
+  port: database_port,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

@@ -33,21 +33,21 @@ app.post("/nearby_messages/:user_id", async (req, res) => {
   const user_id = +req.params.user_id;
 
   const body = req.body;
-  const x = +body.pos_x;
-  const y = +body.pos_y;
-  const z = +body.pos_z;
+  const x = +body.y;
+  const y = +body.x;
+  const z = +body.z;
 
   const data = await db.get_nearby_messages({
     user_id: user_id,
-    pos_x: x,
-    pos_y: y,
-    pos_z: z,
+    x: x,
+    y: y,
+    z: z,
   });
 
   res.json(data);
 });
 
-var port = process.env.PORT || serverPort;
+var port = process.env.PORT || 3000;
 
 app.listen(port, () => {
   console.log("El servidor está inicializado en el puerto 3000");

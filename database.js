@@ -6,12 +6,6 @@ const database_username = process.env.database_username || 'root';
 const database_password = process.env.database_password || '';
 const database_port = process.env.database_port || 3306;
 
-console.log(database_server);
-console.log(database_name);
-console.log(database_username);
-console.log(database_password);
-console.log(database_port);
-
 const pool = createPool({
   host: database_server,
   database: database_name,
@@ -49,9 +43,9 @@ async function create_message(data) {
 async function get_nearby_messages(data) {
   const user_id = data.user_id;
 
-  const x = data.pos_x;
-  const y = data.pos_y;
-  const z = data.pos_z;
+  const x = data.x;
+  const y = data.y;
+  const z = data.z;
 
   const query = `
   SELECT 

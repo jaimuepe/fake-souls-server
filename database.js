@@ -6,6 +6,12 @@ const database_username = process.env.database_username || 'root';
 const database_password = process.env.database_password || '';
 const database_port = process.env.database_server || 3306;
 
+console.log(database_server);
+console.log(database_name);
+console.log(database_username);
+console.log(database_password);
+console.log(database_port);
+
 const pool = createPool({
   host: database_server,
   database: database_name,

@@ -4,7 +4,7 @@ const database_server = process.env.database_server || 'localhost';
 const database_name = process.env.database_name || 'game';
 const database_username = process.env.database_username || 'root';
 const database_password = process.env.database_password || '';
-const database_port = process.env.database_server || 3306;
+const database_port = process.env.database_port || 3306;
 
 console.log(database_server);
 console.log(database_name);

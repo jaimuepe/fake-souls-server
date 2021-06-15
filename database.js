@@ -23,9 +23,38 @@ const max_sqr_message_distance = max_message_distance * max_message_distance;
 
 async function user_exists(username) {
 
-  const query = 'SELECT EXISTS(SELECT * FROM users WHERE display_name = ?) as e';
+  const query = 'SELECT id FROM users WHERE display_name = ?';
+
   const [rows, _] = await pool.query(query, [username]);
-  return rows[0]['e'];
+
+  if (rows.length === 0) {
+    return { 'exists': false };
+  } else {
+    return { 'exists': true, 'id': rows[0].id };
+  }
+}
+
+async function create_user(username) {
+
+  const userData = await user_exists(username);
+
+  if (userData.exists) {
+    return { 'successful': false, error: 'User already exists' };
+  }
+
+  const query = `
+  INSERT INTO users 
+  (display_name)
+  VALUES
+  (?)`;
+
+  const result = await pool.execute(query, [username]);
+
+  const data = {
+    id: result[0].insertId
+  };
+
+  return { successful: true, data: data };
 }
 
 async function create_message(data) {
@@ -92,8 +121,9 @@ async function get_message_data(message_id) {
 }
 
 export default {
+  create_message,
   get_nearby_messages,
   get_message_data,
-  create_message,
-  user_exists
+  user_exists,
+  create_user
 };

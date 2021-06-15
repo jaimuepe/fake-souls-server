@@ -7,8 +7,17 @@ const app = express();
 app.use(json());
 app.use(cors());
 
+app.head("/user/display_name/:name", async (req, res) => {
+  const display_name = req.params.name;
+  if (await db.user_exists(display_name)) {
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(404);
+  }
+});
+
 app.get("/message/:message_id", async (req, res) => {
-  var message_id = +req.params.message_id;
+  const message_id = +req.params.message_id;
   const data = await db.get_message_data(message_id);
   res.json(data);
 });

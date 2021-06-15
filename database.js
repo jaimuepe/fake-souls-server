@@ -21,6 +21,13 @@ const max_messages = 10;
 const max_message_distance = 50.0;
 const max_sqr_message_distance = max_message_distance * max_message_distance;
 
+async function user_exists(username) {
+
+  const query = 'SELECT EXISTS(SELECT * FROM users WHERE display_name = ?) as e';
+  const [rows, _] = await pool.query(query, [username]);
+  return rows[0]['e'];
+}
+
 async function create_message(data) {
 
   const user_id = data.user_id;
@@ -88,4 +95,5 @@ export default {
   get_nearby_messages,
   get_message_data,
   create_message,
+  user_exists
 };

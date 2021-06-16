@@ -91,7 +91,7 @@ app.post("/nearby_messages/:user_id", async (req, res) => {
   const y = +body.x;
   const z = +body.z;
 
-  if (isNaN(userId) || userId === 0 || isNaN(x) || isNaN(y) || isNaN(z)) {
+  if (isNaN(user_id) || user_id === 0 || isNaN(x) || isNaN(y) || isNaN(z)) {
     res.status(400).json({
       status: 'error',
       message: 'Invalid values'

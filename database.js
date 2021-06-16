@@ -17,15 +17,16 @@ const pool = createPool({
   queueLimit: 0,
 });
 
-const max_messages = 30;
-const max_message_distance = 50.0;
-const max_sqr_message_distance = max_message_distance * max_message_distance;
+async function get_config_value(id) {
+  const [rows,] = await pool.query('SELECT value FROM configuration WHERE id = ?', [id]);
+  return rows[0].value;
+}
 
 async function user_exists(username) {
 
   const query = 'SELECT id FROM users WHERE display_name = ?';
 
-  const [rows, _] = await pool.query(query, [username]);
+  const [rows,] = await pool.query(query, [username]);
 
   if (rows.length === 0) {
     return { 'exists': false };
@@ -88,6 +89,11 @@ async function get_nearby_messages(data) {
   const x = data.x;
   const y = data.y;
   const z = data.z;
+
+  const max_messages = +await get_config_value('max_fetch_messages');
+  const max_message_distance = +await get_config_value('max_distance_fetch_messages');
+
+  const max_sqr_message_distance = max_message_distance * max_message_distance;
 
   const query_others = `
   SELECT 

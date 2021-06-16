@@ -69,6 +69,19 @@ app.put("/message", async (req, res) => {
   }
 });
 
+app.delete("/user/:user_id/message/:message_id", async (req, res) => {
+
+  const message_id = +req.params.message_id;
+  const user_id = +req.params.user_id;
+
+  const result = await db.delete_message(message_id, user_id);
+  if (result) {
+    res.sendStatus(204);
+  } else {
+    res.sendStatus(404);
+  }
+});
+
 app.post("/nearby_messages/:user_id", async (req, res) => {
 
   const user_id = +req.params.user_id;

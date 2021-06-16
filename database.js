@@ -35,6 +35,11 @@ async function user_exists(username) {
   }
 }
 
+async function delete_message(message_id, user_id) {
+  const res = await pool.execute("DELETE FROM messages WHERE id = ? AND user_id = ?", [message_id, user_id]);
+  return res[0].affectedRows;
+}
+
 async function create_user(username) {
 
   const userData = await user_exists(username);
@@ -158,5 +163,6 @@ export default {
   get_nearby_messages,
   get_message_data,
   user_exists,
-  create_user
+  create_user,
+  delete_message
 };

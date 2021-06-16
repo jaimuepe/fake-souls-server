@@ -43,15 +43,30 @@ app.put("/message", async (req, res) => {
   const user_id = +body.user_id;
   const content = body.content;
 
-  const x = +body.pos.x;
-  const y = +body.pos.y;
-  const z = +body.pos.z;
+  const x = +body.pos_x;
+  const y = +body.pos_y;
+  const z = +body.pos_z;
 
-  await db.create_message({
+  if (isNaN(user_id) || user_id == 0 || isNaN(x) || isNaN(y) || isNaN(z) || !content) {
+    res.status(400).json({
+      status: 'error',
+      message: 'Invalid values'
+    });
+    return;
+  }
+
+  const result = await db.create_message({
     user_id: user_id, content: content, pos_x: x, pos_y: y, pos_z: z
   })
 
-  res.sendStatus(200);
+  if (result.successful) {
+    res.json(result.data);
+  } else {
+    res.status(400).json({
+      status: 'error',
+      message: result.error
+    });
+  }
 });
 
 app.post("/nearby_messages/:user_id", async (req, res) => {

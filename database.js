@@ -73,7 +73,13 @@ async function create_message(data) {
     (?, ?, ?, ?, ?)
   `;
 
-  await pool.execute(query, [user_id, message, x, y, z]);
+  const result = await pool.execute(query, [user_id, message, x, y, z]);
+
+  const ret_data = {
+    id: result[0].insertId
+  };
+
+  return { successful: true, data: ret_data };
 }
 
 async function get_nearby_messages(data) {
@@ -83,9 +89,10 @@ async function get_nearby_messages(data) {
   const y = data.y;
   const z = data.z;
 
-  const query = `
+  const query_others = `
   SELECT 
       m.id as message_id,
+      m.user_id user_id,
       m.pos_x as x,
       m.pos_y as y,
       m.pos_z as z,
@@ -99,8 +106,28 @@ async function get_nearby_messages(data) {
   LIMIT ${max_messages}
   `;
 
-  const [rows, _] = await pool.query(query);
-  return rows;
+  const [rows_others,] = await pool.query(query_others);
+
+  const query_self = `
+  SELECT 
+      m.id as message_id,
+      m.user_id user_id,
+      m.pos_x as x,
+      m.pos_y as y,
+      m.pos_z as z,
+      (m.pos_x - ${x}) * (m.pos_x - ${x}) +
+        (m.pos_y - ${y}) * (m.pos_y - ${y}) +
+        (m.pos_z - ${z}) * (m.pos_z - ${z}) 
+      AS distance
+  FROM messages m WHERE  m.user_id = ${user_id}
+  HAVING distance < ${max_sqr_message_distance}
+  ORDER BY distance DESC
+  LIMIT ${max_messages}
+  `;
+
+  const [rows_self,] = await pool.query(query_self);
+
+  return [...rows_others, ...rows_self];
 }
 
 async function get_message_data(message_id) {

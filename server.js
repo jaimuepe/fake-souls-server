@@ -7,6 +7,11 @@ const app = express();
 app.use(json());
 app.use(cors());
 
+function isBlank(str) {
+  return (!str || /^\s*$/.test(str));
+}
+
+// Checks if a user exists by its display name.
 app.get("/user/display_name/:name", async (req, res) => {
 
   const display_name = req.params.name;
@@ -14,12 +19,7 @@ app.get("/user/display_name/:name", async (req, res) => {
   res.json(user);
 });
 
-app.get("/message/:id", async (req, res) => {
-  const message_id = +req.params.id;
-  const data = await db.get_message_data(message_id);
-  res.json(data);
-});
-
+// Creates a new user
 app.put('/user/:name', async (req, res) => {
 
   const display_name = req.params.name;
@@ -29,18 +29,23 @@ app.put('/user/:name', async (req, res) => {
   if (result.successful) {
     res.json(result.data);
   } else {
-    res.status(400).json({
-      status: 'error',
-      message: result.error
-    });
+    res.sendStatus(400);
   }
 });
 
-app.put("/message", async (req, res) => {
+// Retrieves the contents of a specific message
+app.get("/message/:id", async (req, res) => {
+  const message_id = +req.params.id;
+  const data = await db.get_message_data(message_id);
+  res.json(data);
+});
+
+// Creates a new message
+app.put("/user/:user_id/message", async (req, res) => {
+
+  const user_id = req.params.user_id;
 
   const body = req.body;
-
-  const user_id = +body.user_id;
   const content = body.content;
 
   const x = +body.pos_x;
@@ -48,24 +53,18 @@ app.put("/message", async (req, res) => {
   const z = +body.pos_z;
 
   if (isNaN(user_id) || user_id === 0 || isNaN(x) || isNaN(y) || isNaN(z) || !content) {
-    res.status(400).json({
-      status: 'error',
-      message: 'Invalid values'
-    });
+    res.sendStatus(400);
     return;
   }
 
-  const result = await db.create_message({
-    user_id: user_id, content: content, pos_x: x, pos_y: y, pos_z: z
-  })
-
-  if (result.successful) {
-    res.json(result.data);
-  } else {
-    res.status(400).json({
-      status: 'error',
-      message: result.error
+  try {
+    const insert_id = await db.create_message({
+      user_id: user_id, content: content, pos_x: x, pos_y: y, pos_z: z
     });
+    res.json({ "id": insert_id });
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
   }
 });
 
@@ -82,6 +81,67 @@ app.delete("/user/:user_id/message/:message_id", async (req, res) => {
   }
 });
 
+// get the # of mails for a user
+app.get("/user/:id/mail/count", async (req, res) => {
+
+  const user_id = +req.params.id;
+
+  if (isNaN(user_id) || user_id === 0) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const result = await db.get_mail_count(user_id);
+  res.json(result.map(r => r.id));
+});
+
+// get the mails of a user
+app.get("/user/:id/mail", async (req, res) => {
+
+  const user_id = +req.params.id;
+
+  if (isNaN(user_id) || user_id === 0) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const result = await db.get_mail(user_id);
+  res.json(result);
+});
+
+app.patch("/user/:user_id/mail/:mail_id/seen", async (req, res) => {
+
+  const user_id = +req.params.user_id;
+  const mail_id = +req.params.mail_id;
+
+  if (isNaN(user_id) || user_id === 0 || isNaN(mail_id) || mail_id === 0) {
+    res.sendStatus(400);
+    return;
+  }
+
+  if (await db.mark_mail_as_seen(user_id, mail_id)) {
+    res.sendStatus(204);
+  } else {
+    res.sendStatus(404);
+  }
+});
+
+// Sends a mail
+app.put("/user/:id/mail", async (req, res) => {
+
+  const user_id = +req.params.id;
+  const content = req.body.content;
+
+  if (isNaN(user_id) || user_id === 0 || isBlank(content)) {
+    res.sendStatus(400);
+    return;
+  }
+
+  db.send_mail(user_id, content);
+  res.sendStatus(204);
+});
+
+
 app.post("/nearby_messages/:user_id", async (req, res) => {
 
   const user_id = +req.params.user_id;
@@ -92,10 +152,7 @@ app.post("/nearby_messages/:user_id", async (req, res) => {
   const z = +body.z;
 
   if (isNaN(user_id) || user_id === 0 || isNaN(x) || isNaN(y) || isNaN(z)) {
-    res.status(400).json({
-      status: 'error',
-      message: 'Invalid values'
-    });
+    res.sendStatus(400);
     return;
   }
 

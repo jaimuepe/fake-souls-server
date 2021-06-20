@@ -18,6 +18,7 @@ const pool = createPool({
 });
 
 async function get_config_value(id) {
+
   const [rows,] = await pool.query('SELECT value FROM configuration WHERE id = ?', [id]);
   return rows[0].value;
 }
@@ -79,13 +80,8 @@ async function create_message(data) {
     (?, ?, ?, ?, ?)
   `;
 
-  const result = await pool.execute(query, [user_id, message, x, y, z]);
-
-  const ret_data = {
-    id: result[0].insertId
-  };
-
-  return { successful: true, data: ret_data };
+  const [result,] = await pool.execute(query, [user_id, message, x, y, z]);
+  return result.insertId;
 }
 
 async function get_nearby_messages(data) {
@@ -154,8 +150,70 @@ async function get_message_data(message_id) {
     WHERE m.id = ?
   `;
 
-  const [rows, _] = await pool.query(query, [message_id]);
+  const [rows,] = await pool.query(query, [message_id]);
   return rows.length == 1 ? rows[0] : {};
+}
+
+async function get_mail_count(user_id) {
+
+  const query = "SELECT id FROM mails WHERE receiver_id = ? AND seen = 0";
+  const [rows,] = await pool.query(query, [user_id]);
+
+  return rows;
+}
+
+async function get_mail(user_id) {
+
+  const query = `
+  SELECT 
+    m.id as mail_id,
+    m.sender_id as sender_id,
+    u.display_name as sender_display_name,
+    m.content as message_content,
+    m.seen as message_read,
+    m.sent_on as message_sent_on
+  FROM mails m 
+  INNER JOIN users u 
+    ON m.sender_id = u.id 
+  WHERE 
+    m.receiver_id = ?
+  ORDER BY
+    m.sent_on DESC`;
+
+  const [rows,] = await pool.query(query, [user_id]);
+
+  return rows;
+}
+
+async function mark_mail_as_seen(user_id, mail_id) {
+
+  const query = `
+    UPDATE mails
+    SET seen = 1
+    WHERE id = ? AND receiver_id = ?
+  `;
+
+  const [rows,] = await pool.query(query, [mail_id, user_id]);
+  return rows.affectedRows == 1;
+}
+
+async function send_mail(sender_id, content) {
+
+  const rand_user_query = "SELECT id FROM users WHERE id != ? ORDER BY RAND() LIMIT 1";
+
+  // pick a random user
+  const [rows,] = await pool.query(rand_user_query, [sender_id]);
+
+  const receiver_id = rows[0].id;
+
+  const query = `
+      INSERT INTO mails 
+      (sender_id, receiver_id, content)
+      VALUES
+      (?, ?, ?)
+    `;
+
+  await pool.execute(query, [sender_id, receiver_id, content]);
 }
 
 export default {
@@ -164,5 +222,9 @@ export default {
   get_message_data,
   user_exists,
   create_user,
-  delete_message
+  delete_message,
+  get_mail_count,
+  get_mail,
+  mark_mail_as_seen,
+  send_mail
 };

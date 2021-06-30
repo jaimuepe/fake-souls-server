@@ -8,7 +8,7 @@ import login_service from './login_service.js';
 import message_service from './message_service.js';
 import { Config } from './config.js';
 
-const mongodb_uri = process.env.mongodb_url || Config.mongodb_url;
+const mongodb_uri = process.env.MONGODB_URI || Config.MONGODB_URI;
 
 mongoose.connect(mongodb_uri, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true }).then(() => {
   console.log('mongoDB connected');

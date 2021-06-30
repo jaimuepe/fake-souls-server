@@ -30,6 +30,11 @@ app.get('/user/:name/session', async (req, res) => {
   login_service.login(req, res);
 });
 
+// retrieves a message
+app.get('/message/:id', (req, res) => {
+  message_service.get_message(req, res);
+});
+
 // creates a new message
 app.post('/message', (req, res) => {
   message_service.create_message(req, res);
@@ -45,6 +50,17 @@ app.get('/messages', async (req, res) => {
   message_service.get_nearby_messages(req, res);
 });
 
+// creates/updates a message rating
+app.post('/rating', async (req, res) => {
+  message_service.rate(req, res);
+});
+
+// gets a message total score
+app.get('/message/:id/ratings/total', async (req, res) => {
+  message_service.get_total_score(req, res);
+});
+
+// ------------------------- OLD
 
 // Checks if a user exists by its display name.
 app.get("/user/display_name/:name", async (req, res) => {
@@ -65,26 +81,6 @@ app.put('/user/:name', async (req, res) => {
     res.json(result.data);
   } else {
     res.sendStatus(400);
-  }
-});
-
-// Retrieves the contents of a specific message
-app.get("/message/:id", async (req, res) => {
-  const message_id = +req.params.id;
-  const data = await db.get_message_data(message_id);
-  res.json(data);
-});
-
-app.delete("/user/:user_id/message/:message_id", async (req, res) => {
-
-  const message_id = +req.params.message_id;
-  const user_id = +req.params.user_id;
-
-  const result = await db.delete_message(message_id, user_id);
-  if (result) {
-    res.sendStatus(204);
-  } else {
-    res.sendStatus(404);
   }
 });
 
@@ -146,31 +142,6 @@ app.put("/user/:id/mail", async (req, res) => {
 
   db.send_mail(user_id, content);
   res.sendStatus(204);
-});
-
-
-app.post("/nearby_messages/:user_id", async (req, res) => {
-
-  const user_id = +req.params.user_id;
-
-  const body = req.body;
-  const x = +body.y;
-  const y = +body.x;
-  const z = +body.z;
-
-  if (isNaN(user_id) || user_id === 0 || isNaN(x) || isNaN(y) || isNaN(z)) {
-    res.sendStatus(400);
-    return;
-  }
-
-  const data = await db.get_nearby_messages({
-    user_id: user_id,
-    x: x,
-    y: y,
-    z: z,
-  });
-
-  res.json(data);
 });
 
 var port = process.env.PORT || 3000;

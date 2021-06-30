@@ -2,6 +2,8 @@
 
 import { User } from './models/user.js';
 import { Message } from './models/message.js';
+import { MessageRating } from './models/message_rating.js';
+
 import { is_blank } from './utils.js';
 
 // TODO this should be retrieved from somewhere
@@ -26,7 +28,7 @@ async function create_message(req, res) {
 
     try {
 
-        var message = new Message({ user_id: user_id, content: content, x: x, y: y, z: z, cell_x: cell_x, cell_z: cell_z, cell_width: CELL_WIDTH });
+        var message = new Message({ user: user_id, content: content, x: x, y: y, z: z, cell_x: cell_x, cell_z: cell_z, cell_width: CELL_WIDTH });
         message = await message.save();
 
         res.json(message);
@@ -48,10 +50,34 @@ async function delete_message(req, res) {
     }
 
     try {
-        await Message.deleteOne({ '_id': message_id, 'user_id': user_id });
+        await Message.deleteOne({ _id: message_id, user: user_id });
         res.sendStatus(204);
     } catch (err) {
         console.error('Error during delete_message: ', err);
+        res.sendStatus(500);
+    }
+}
+
+async function get_message(req, res) {
+
+    const id = req.params.id;
+
+    if (is_blank(id)) {
+        res.sendStatus(400);
+        return;
+    }
+
+    try {
+        const message = await Message.findById(id).populate("user", '_id, name').lean();
+        res.json({
+            _id: message._id,
+            content: message.content,
+            created_at: message.created_at,
+            user_id: message.user._id,
+            user_name: message.user.name
+        });
+    } catch (err) {
+        console.error('Error during get_message: ', err);
         res.sendStatus(500);
     }
 }
@@ -78,21 +104,61 @@ async function get_nearby_messages(req, res) {
 
         const [cell_x, cell_z] = get_cell_coords(x, z);
 
-        const or_list = [];
-        for (var i = -1; i <= 1; ++i) {
-            for (var j = -1; j <= 1; ++j) {
-                or_list.push({ cell_x: cell_x + i, cell_z: cell_z + j });
-            }
-        }
-
-        const messages = await Message.find(
-            { $or: or_list },
-            '-cell_x -cell_z -cell_width -content').lean();
-
+        const messages = await Message.messages_at_cell(cell_x, cell_z);
         res.json(messages);
 
     } catch (err) {
         console.error('Error during get_nearby_messages: ', err);
+        res.sendStatus(500);
+    }
+}
+
+async function rate(req, res) {
+
+    const body = req.body;
+    const user_id = body.user_id;
+    const message_id = body.message_id;
+
+    const rating = +body.rating;
+
+    if (is_blank(user_id) || is_blank(message_id) || isNaN(rating)) {
+        res.sendStatus(400);
+        return;
+    }
+
+    try {
+
+        const update = { rating: rating };
+
+        await MessageRating.updateOne({ message: message_id, user: user_id }, update, { upsert: true });
+        res.sendStatus(204);
+
+    } catch (err) {
+        console.error('Error during rate: ', err);
+        res.sendStatus(500);
+    }
+}
+
+async function get_total_score(req, res) {
+
+    const message_id = req.params.id;
+    const user_id = req.body.user_id;
+
+    if (is_blank(message_id) || is_blank(user_id)) {
+        res.sendStatus(400);
+        return;
+    }
+
+    try {
+
+        const total_score = await MessageRating.total_score(message_id);
+        var my_rating = await MessageRating.find({ message: message_id, user: user_id }, 'rating').lean();
+
+        my_rating = my_rating.length == 0 ? 0 : my_rating[0].rating;
+
+        res.json({ message_id: message_id, total_score: total_score, my_rating: my_rating });
+    } catch (err) {
+        console.error('Error during get_total_score: ', err);
         res.sendStatus(500);
     }
 }
@@ -108,5 +174,8 @@ function get_cell_coords(x, z) {
 export default {
     create_message,
     delete_message,
-    get_nearby_messages
+    get_message,
+    get_nearby_messages,
+    rate,
+    get_total_score,
 }

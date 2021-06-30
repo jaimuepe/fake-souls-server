@@ -1,7 +1,6 @@
 'use strict';
 
 import express, { json } from "express";
-import db from "./database.js";
 import mongoose from 'mongoose';
 import cors from "cors";
 import login_service from './login_service.js';

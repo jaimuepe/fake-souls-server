@@ -14,7 +14,6 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "mongoose": "^5.13.0",
-    "mysql2": "^2.2.5"
+    "mongoose": "^5.13.0"
   }
 }

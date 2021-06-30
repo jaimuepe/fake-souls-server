@@ -1,15 +1,50 @@
+'use strict';
+
 import express, { json } from "express";
 import db from "./database.js";
-
+import mongoose from 'mongoose';
 import cors from "cors";
+import login_service from './login_service.js';
+import message_service from './message_service.js';
+import { Config } from './config.js';
+
+const mongodb_uri = process.env.mongodb_url || Config.mongodb_url;
+
+mongoose.connect(mongodb_uri, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true }).then(() => {
+  console.log('mongoDB connected');
+}, (err) => {
+  console.error('Failed to connect to mongoDB', err);
+});
 
 const app = express();
 app.use(json());
 app.use(cors());
 
-function isBlank(str) {
-  return (!str || /^\s*$/.test(str));
-}
+// creates a new user
+app.post('/user/:name', async (req, res) => {
+  login_service.create_user(req, res);
+});
+
+// logs in a user
+app.get('/user/:name/session', async (req, res) => {
+  login_service.login(req, res);
+});
+
+// creates a new message
+app.post('/message', (req, res) => {
+  message_service.create_message(req, res);
+});
+
+// deletes a message
+app.delete('/message/:id', (req, res) => {
+  message_service.delete_message(req, res);
+});
+
+// gets the messages close to the player
+app.get('/messages', async (req, res) => {
+  message_service.get_nearby_messages(req, res);
+});
+
 
 // Checks if a user exists by its display name.
 app.get("/user/display_name/:name", async (req, res) => {
@@ -38,34 +73,6 @@ app.get("/message/:id", async (req, res) => {
   const message_id = +req.params.id;
   const data = await db.get_message_data(message_id);
   res.json(data);
-});
-
-// Creates a new message
-app.put("/user/:user_id/message", async (req, res) => {
-
-  const user_id = req.params.user_id;
-
-  const body = req.body;
-  const content = body.content;
-
-  const x = +body.pos_x;
-  const y = +body.pos_y;
-  const z = +body.pos_z;
-
-  if (isNaN(user_id) || user_id === 0 || isNaN(x) || isNaN(y) || isNaN(z) || !content) {
-    res.sendStatus(400);
-    return;
-  }
-
-  try {
-    const insert_id = await db.create_message({
-      user_id: user_id, content: content, pos_x: x, pos_y: y, pos_z: z
-    });
-    res.json({ "id": insert_id });
-  } catch (error) {
-    console.log(error);
-    res.sendStatus(500);
-  }
 });
 
 app.delete("/user/:user_id/message/:message_id", async (req, res) => {

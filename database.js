@@ -6,7 +6,9 @@ const database_username = process.env.database_username || 'root';
 const database_password = process.env.database_password || '';
 const database_port = process.env.database_port || 3306;
 
-const pool = createPool({
+const pool = {};
+
+/* const pool = createPool({
   host: database_server,
   database: database_name,
   user: database_username,
@@ -15,7 +17,7 @@ const pool = createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-});
+}); */
 
 async function get_config_value(id) {
 

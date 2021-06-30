@@ -41,8 +41,8 @@ async function create_message(req, res) {
 
 async function delete_message(req, res) {
 
-    const message_id = req.params.id;
-    const user_id = req.body.user_id;
+    const message_id = req.params.message_id;
+    const user_id = req.params.user_id;
 
     if (is_blank(message_id) || is_blank(user_id)) {
         res.sendStatus(400);
@@ -141,8 +141,8 @@ async function rate(req, res) {
 
 async function get_total_score(req, res) {
 
-    const message_id = req.params.id;
-    const user_id = req.body.user_id;
+    const message_id = req.params.message_id;
+    const user_id = req.params.user_id;
 
     if (is_blank(message_id) || is_blank(user_id)) {
         res.sendStatus(400);

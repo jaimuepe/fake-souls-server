@@ -40,12 +40,12 @@ app.post('/message', (req, res) => {
 });
 
 // deletes a message
-app.delete('/message/:id', (req, res) => {
+app.delete('/user/:user_id/message/:message_id', (req, res) => {
   message_service.delete_message(req, res);
 });
 
 // gets the messages close to the player
-app.get('/messages', async (req, res) => {
+app.post('/messages', async (req, res) => {
   message_service.get_nearby_messages(req, res);
 });
 
@@ -55,7 +55,7 @@ app.post('/rating', async (req, res) => {
 });
 
 // gets a message total score
-app.get('/message/:id/ratings/total', async (req, res) => {
+app.get('/user/:user_id/message/:message_id/ratings/total', async (req, res) => {
   message_service.get_total_score(req, res);
 });
 
